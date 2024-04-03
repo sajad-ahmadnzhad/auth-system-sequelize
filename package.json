@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "start": "nodemon app.ts"
+  },
+  "dependencies": {
+    "@sequelize/core": "^7.0.0-alpha.37",
+    "@types/node": "^20.12.3",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.26.2",
+    "fastify-plugin": "^4.5.1",
+    "mysql2": "^3.9.3"
+  }
+}
