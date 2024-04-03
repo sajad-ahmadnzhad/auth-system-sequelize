@@ -8,3 +8,8 @@ export interface RegisterBody {
 export interface JWTPayload {
   id: string;
 }
+
+export interface LoginBody {
+  identifier: string
+  password: string
+}
