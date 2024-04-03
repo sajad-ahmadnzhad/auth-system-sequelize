@@ -5,3 +5,6 @@ export interface RegisterBody {
   password: string;
   confirmPassword: string;
 }
+export interface JWTPayload {
+  id: string;
+}

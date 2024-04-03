@@ -3,7 +3,7 @@ import userModel from "../model/user.model";
 import { Op } from "@sequelize/core";
 import { RegisterBody } from "../interface/auth.interface";
 
-export const register: RouteHandlerMethod = async (req, reply) => {
+export const registerHandler: RouteHandlerMethod = async (req, reply) => {
   const { name, username, email, password } = req.body as RegisterBody;
   const existingUser = await userModel.findOne({
     where: { [Op.or]: [{ username }, { email }] },
@@ -35,4 +35,8 @@ export const register: RouteHandlerMethod = async (req, reply) => {
   });
 
   reply.send({ message: "registered was successful" });
+};
+export const logoutHandler: RouteHandlerMethod = async (req, reply) => {
+  reply.clearCookie("accessToken");
+  reply.send({ message: "logout was successful" });
 };

@@ -1,7 +1,8 @@
 import { FastifyInstance } from "fastify";
-import { register } from '../handler/auth.handler';
-import { registerOptions } from "../schema/auth.schema";
+import { logoutHandler, registerHandler } from '../handler/auth.handler';
+import { logoutOptions, registerOptions } from "../schema/auth.schema";
 
 export default async (fastify: FastifyInstance) => {
-    fastify.post('/register' , registerOptions , register)
+    fastify.post('/register' , registerOptions , registerHandler)
+    fastify.post('/logout' , logoutOptions , logoutHandler)
 }
