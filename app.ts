@@ -14,8 +14,6 @@ const start = async () => {
   }
 };
 
-app.get('/', () => {
-    return 'hello world'
-})
+
 
 start();
