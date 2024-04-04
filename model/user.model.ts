@@ -34,6 +34,7 @@ const userModel = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    refreshToken: DataTypes.STRING,
   },
   { indexes: [{ name: "id", fields: ["id"] }] }
 );

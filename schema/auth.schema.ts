@@ -63,3 +63,16 @@ export const logoutOptions: RouteShorthandOptions = {
     },
   },
 } as const;
+export const refreshTokenOptions: RouteShorthandOptions = {
+  schema: {
+    response: {
+      200: {
+        type: "object",
+        required: ["message"],
+        properties: {
+          message: { type: "string" },
+        },
+      },
+    },
+  },
+} as const;

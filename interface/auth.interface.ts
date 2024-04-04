@@ -13,3 +13,11 @@ export interface LoginBody {
   identifier: string
   password: string
 }
+
+export interface UserAttributes extends Omit<RegisterBody, 'confirmPassword'> {
+  id: number
+  refreshToken: string
+  isAdmin: boolean
+  isSuperAdmin: boolean
+  profile: string
+}

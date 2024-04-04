@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyRequest } from "fastify";
 import { JWTPayload } from "../interface/auth.interface";
 import userModel from "../model/user.model";
 export default async (req: FastifyRequest): Promise<void> => {
@@ -12,11 +12,14 @@ export default async (req: FastifyRequest): Promise<void> => {
 
   const verifyToken = <JWTPayload>req.server.jwt.verify(token);
 
-  const user = await userModel.findOne({ where: { id: verifyToken.id } });
+  const user = await userModel.findOne({
+    where: { id: verifyToken.id },
+    attributes: { exclude: ["password"] },
+  });
 
   if (!user) {
     throw httpErrors.BadRequest("User not found");
   }
 
-  req.user = user;
+  req.user = user.dataValues;
 };

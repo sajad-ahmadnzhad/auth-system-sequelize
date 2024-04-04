@@ -1,7 +1,15 @@
 import { RouteHandlerMethod } from "fastify";
 import userModel from "../model/user.model";
 import { Op } from "@sequelize/core";
-import { LoginBody, RegisterBody } from "../interface/auth.interface";
+import {
+  LoginBody,
+  RegisterBody,
+  UserAttributes,
+} from "../interface/auth.interface";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../helpers/generateToken";
 
 export const registerHandler: RouteHandlerMethod = async (req, reply) => {
   const { name, username, email, password } = req.body as RegisterBody;
@@ -28,13 +36,16 @@ export const registerHandler: RouteHandlerMethod = async (req, reply) => {
     isSuperAdmin: countUsers === 0,
   });
 
-  const accessToken = req.server.jwt.sign({ id: user.dataValues.id } , {expiresIn: '30d'});
-  const twoMonths = 60 * 60 * 24 * 60 * 1000;
+  const accessToken = generateAccessToken(
+    req.server,
+    user.dataValues.id as number
+  );
+
   reply.setCookie("accessToken", accessToken, {
     secure: true,
     httpOnly: true,
-    maxAge: twoMonths,
     path: "/",
+    sameSite: true,
   });
 
   reply.send({ message: "registered was successful" });
@@ -63,18 +74,56 @@ export const loginHandler: RouteHandlerMethod = async (req, reply) => {
     throw httpErrors.BadRequest("password is not valid");
   }
 
-  const accessToken = req.server.jwt.sign(
-    { id: user.dataValues.id },
-    { expiresIn: "30d" }
+  const accessToken = generateAccessToken(
+    req.server,
+    user.dataValues.id as number
+  );
+  const refreshToken = generateRefreshToken(
+    req.server,
+    user.dataValues.id as number
   );
 
-  const twoMonths = 60 * 60 * 24 * 60 * 1000;
-  reply.setCookie("accessToken", accessToken, {
+  await user.update({ refreshToken });
+
+  const cookieOptions = {
     secure: true,
     httpOnly: true,
-    maxAge: twoMonths,
     path: "/",
-  });
+    sameSite: true,
+  };
+
+  reply.setCookie("accessToken", accessToken, cookieOptions);
+
+  reply.setCookie("refreshToken", refreshToken, cookieOptions);
 
   reply.send({ message: "your logged in successful" });
+};
+export const refreshTokenHandler: RouteHandlerMethod = async (req, reply) => {
+  const { refreshToken } = req.cookies;
+  const { httpErrors } = req.server;
+  if (!refreshToken) {
+    throw httpErrors.Unauthorized("Refresh token not found");
+  }
+
+  const user = (await userModel.findOne({ where: { refreshToken } }))
+    ?.dataValues as UserAttributes;
+
+  if (!user) {
+    throw httpErrors.NotFound("User not found");
+  }
+
+  req.server.jwt.verify(user.refreshToken);
+
+  const newAccessToken = generateAccessToken(req.server, user.id);
+
+  const cookieOptions = {
+    secure: true,
+    httpOnly: true,
+    path: "/",
+    sameSite: true,
+  };
+
+  reply.setCookie("accessToken", newAccessToken , cookieOptions);
+
+  reply.send({ message: "accessToken was created successfully" });
 };
