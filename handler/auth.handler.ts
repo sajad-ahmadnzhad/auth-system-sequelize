@@ -51,12 +51,16 @@ export const registerHandler: RouteHandlerMethod = async (req, reply) => {
   reply.send({ message: "registered was successful" });
 };
 export const logoutHandler: RouteHandlerMethod = async (req, reply) => {
+  const user = req.user as UserAttributes;
+  await req.server.redis.del(user.id.toString());
   reply.clearCookie("accessToken");
+  reply.clearCookie("refreshToken");
   reply.send({ message: "logout was successful" });
 };
 export const loginHandler: RouteHandlerMethod = async (req, reply) => {
   const { identifier, password } = <LoginBody>req.body;
   const { httpErrors } = req.server;
+  const { redis } = req.server;
   const user = await userModel.findOne({
     where: { [Op.or]: [{ username: identifier }, { email: identifier }] },
   });
@@ -83,7 +87,7 @@ export const loginHandler: RouteHandlerMethod = async (req, reply) => {
     user.dataValues.id as number
   );
 
-  await user.update({ refreshToken });
+  redis.set(user.dataValues.id, refreshToken);
 
   const cookieOptions = {
     secure: true,
@@ -104,17 +108,16 @@ export const refreshTokenHandler: RouteHandlerMethod = async (req, reply) => {
   if (!refreshToken) {
     throw httpErrors.Unauthorized("Refresh token not found");
   }
-
-  const user = (await userModel.findOne({ where: { refreshToken } }))
-    ?.dataValues as UserAttributes;
-
-  if (!user) {
-    throw httpErrors.NotFound("User not found");
+  interface JWTPayload {
+    id: number;
   }
 
-  req.server.jwt.verify(user.refreshToken);
+  const refreshTokenPayload: JWTPayload = req.server.jwt.verify(refreshToken);
 
-  const newAccessToken = generateAccessToken(req.server, user.id);
+  const newAccessToken = generateAccessToken(
+    req.server,
+    refreshTokenPayload.id
+  );
 
   const cookieOptions = {
     secure: true,
@@ -123,7 +126,7 @@ export const refreshTokenHandler: RouteHandlerMethod = async (req, reply) => {
     sameSite: true,
   };
 
-  reply.setCookie("accessToken", newAccessToken , cookieOptions);
+  reply.setCookie("accessToken", newAccessToken, cookieOptions);
 
   reply.send({ message: "accessToken was created successfully" });
 };

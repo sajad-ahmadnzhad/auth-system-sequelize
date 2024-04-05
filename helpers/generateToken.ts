@@ -11,6 +11,6 @@ export const generateRefreshToken = (
   fastify: FastifyInstance,
   userId: number
 ): string => {
-  const accessToken = fastify.jwt.sign({ id: userId }, { expiresIn: "30d" });
-  return accessToken;
+  const refreshToken = fastify.jwt.sign({ id: userId }, { expiresIn: "30d" });
+  return refreshToken;
 };
